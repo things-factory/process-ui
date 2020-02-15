@@ -14,8 +14,18 @@ import svgToDataURL from 'svg-to-dataurl'
 
 import BpmnModeler from 'bpmn-js/lib/Modeler'
 
-import DiagramJSStyle from '!!text-loader!bpmn-js/dist/assets/diagram-js.css'
-import BPMNStyle from '!!text-loader!bpmn-js/dist/assets/bpmn-font/css/bpmn-codes.css'
+/* 
+  FIXME
+  https://github.com/bpmn-io/min-dom/issues/5
+  위와 관련된 이슈로 인해서, 
+  bpmn-js와 min-dom 리파지토리를 fork 해서 사용하고 있음.
+  아래 스타일 임포트도 관련된 임시 작업된 형태임.
+  위 이슈가 해결되면, 코멘트된 부분으로 복구할 것.
+*/
+// import DiagramJSStyle from '!!text-loader!bpmn-js/dist/assets/diagram-js.css'
+// import BPMNStyle from '!!text-loader!bpmn-js/dist/assets/bpmn-font/css/bpmn-codes.css'
+import DiagramJSStyle from '!!text-loader!../../assets/diagram-js.css'
+import BPMNStyle from '!!text-loader!../../assets/bpmn-font/css/bpmn-codes.css'
 
 import NEW_DIAGRAM from '../resource/new-diagram.bpmn'
 import './bpmn-font-loader'
@@ -75,10 +85,34 @@ class ProcessModellerPage extends connect(store)(PageView) {
           flex: 1;
         }
 
-        mwc-fab {
+        .buttons {
           position: absolute;
-          left: 15px;
-          bottom: 15px;
+          bottom: 20px;
+          left: 20px;
+
+          padding: 0;
+          margin: 0;
+          list-style: none;
+        }
+
+        .buttons > li {
+          display: inline-block;
+          margin-right: 10px;
+        }
+
+        .buttons > li > a {
+          background: #ddd;
+          border: solid 1px #666;
+          display: inline-block;
+          padding: 5px;
+        }
+
+        .buttons a {
+          opacity: 0.3;
+        }
+
+        .buttons a.active {
+          opacity: 1;
         }
 
         oops-spinner {
@@ -140,13 +174,36 @@ class ProcessModellerPage extends connect(store)(PageView) {
       : html`
           <div></div>
 
-          <mwc-fab icon="save" @click=${e => this.saveProcess(e)} title="save"> </mwc-fab>
+          <ul class="buttons">
+            <li>
+              <a title="save BPMN diagram" @click=${e => this.saveProcess(e)}>
+                save
+              </a>
+            </li>
+            <li>
+              <a id="js-download-diagram" title="download BPMN diagram" @click=${e => this.onDownloadModel()}>
+                export
+              </a>
+            </li>
+            <li>
+              <a id="js-download-svg" title="download as SVG image" @click=${e => this.onDownloadSVG()}>
+                SVG image
+              </a>
+            </li>
+            <li>
+              <a title="download as SVG image" @click=${e => this.fitSize()}>
+                fit
+              </a>
+            </li>
+          </ul>
+
           <oops-spinner ?show=${this._showSpinner}></oops-spinner>
         `
   }
 
   async refresh() {
     if (!this.processId) {
+      this.modeller?.detach()
       this.modeller?.destroy()
       this.modeller = null
 
@@ -188,11 +245,11 @@ class ProcessModellerPage extends connect(store)(PageView) {
   async rebuild() {
     if (this.modeller) {
       this.modeller.detach()
-      delete this.modeller
+      this.modeller.destroy()
     }
 
     this.modeller = new BpmnModeler({
-      container: this.shadowRoot.querySelector('div')
+      container: this.renderRoot.querySelector('div')
     })
 
     if (this.process) {
@@ -208,6 +265,13 @@ class ProcessModellerPage extends connect(store)(PageView) {
         }
       })
     }
+
+    // this.modeller.on('commandStack.changed', function() {
+    //   console.log('commandStack.changed', arguments)
+    // })
+    // this.modeller.on('element.mousedown', function() {
+    //   console.log('element.mousedown', arguments)
+    // })
   }
 
   updated(changes) {
@@ -224,12 +288,64 @@ class ProcessModellerPage extends connect(store)(PageView) {
     }
   }
 
-  onDownloadModel() {
-    if (!this.scene) return
+  async onDownloadModel() {
+    if (!this.modeller) return
 
-    var model = JSON.stringify(this.model, null, 2)
-    var filename = (this.process?.name || 'NONAME') + '-' + Date.now() + '.bpmn'
-    saveAs(new Blob([model], { type: 'application/octet-stream' }), filename)
+    try {
+      var model = await promisify(this.modeller.saveXML).apply(this.modeller, [{ format: true }])
+
+      var filename = (this.process?.name || 'NONAME') + '-' + Date.now() + '.bpmn'
+      saveAs(new Blob([model], { type: 'application/octet-stream' }), filename)
+
+      document.dispatchEvent(
+        new CustomEvent('notify', {
+          detail: {
+            level: 'info',
+            message: 'saved'
+          }
+        })
+      )
+    } catch (ex) {
+      document.dispatchEvent(
+        new CustomEvent('notify', {
+          detail: {
+            level: 'error',
+            message: ex,
+            ex: ex
+          }
+        })
+      )
+    }
+  }
+
+  async onDownloadSVG() {
+    if (!this.modeller) return
+
+    try {
+      var model = await promisify(this.modeller.saveSVG).apply(this.modeller, [])
+
+      var filename = (this.process?.name || 'NONAME') + '-' + Date.now() + '.svg'
+      saveAs(new Blob([model], { type: 'application/octet-stream' }), filename)
+
+      document.dispatchEvent(
+        new CustomEvent('notify', {
+          detail: {
+            level: 'info',
+            message: 'saved'
+          }
+        })
+      )
+    } catch (ex) {
+      document.dispatchEvent(
+        new CustomEvent('notify', {
+          detail: {
+            level: 'error',
+            message: ex,
+            ex: ex
+          }
+        })
+      )
+    }
   }
 
   async createProcess() {
@@ -300,6 +416,10 @@ class ProcessModellerPage extends connect(store)(PageView) {
     }
 
     this.updateContext()
+  }
+
+  fitSize() {
+    this.modeller?.get('canvas').zoom('fit-viewport')
   }
 
   bindShortcutEvent() {

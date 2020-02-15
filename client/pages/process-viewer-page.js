@@ -145,6 +145,8 @@ class ProcessViewerPage extends connect(store)(PageView) {
         if (err) {
           return console.error('could not import BPMN 2.0 diagram', err)
         }
+
+        this.viewer.get('canvas').zoom('fit-viewport')
       })
     }
   }

@@ -32,9 +32,11 @@
   "dependencies": {
     "@things-factory/layout-base": "*",
     "@things-factory/shell": "*",
-    "bpmn-js": "^6.3.0",
+    "bpmn-js": "things-factory/bpmn-js",
     "file-saver": "^2.0.2",
     "svg-to-dataurl": "^1.0.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@things-factory/operato-bpms": "*"
+  }
 }
