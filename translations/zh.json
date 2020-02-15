@@ -1,0 +1,13 @@
+{
+  "button.create": "[zh]create",
+  "button.delete": "[zh]delete",
+  "button.save": "[zh]save",
+  "label.name": "[zh]name",
+  "label.description": "[zh]description",
+  "label.creator": "[zh]creator",
+  "label.updater": "[zh]updater",
+  "label.created-at": "[zh]created at",
+  "label.updated-at": "[zh]updated at",
+  "label.group": "[zh]group",
+  "label.process-group": "[zh]process group"
+}

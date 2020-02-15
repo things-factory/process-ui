@@ -1,0 +1,13 @@
+{
+  "button.create": "[ms]create",
+  "button.delete": "[ms]delete",
+  "button.save": "[ms]save",
+  "label.name": "[ms]name",
+  "label.description": "[ms]description",
+  "label.creator": "[ms]creator",
+  "label.updater": "[ms]updater",
+  "label.created-at": "[ms]created at",
+  "label.updated-at": "[ms]updated at",
+  "label.group": "[ms]group",
+  "label.process-group": "[ms]process group"
+}
