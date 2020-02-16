@@ -1,6 +1,7 @@
 import { html, css, unsafeCSS } from 'lit-element'
 import { connect } from 'pwa-helpers/connect-mixin.js'
 import { PageView, store } from '@things-factory/shell'
+import { ScrollbarStyles } from '@things-factory/styles'
 import { isMacOS } from './is-macos'
 import '@material/mwc-fab'
 
@@ -13,6 +14,9 @@ import { promisify } from 'util'
 import svgToDataURL from 'svg-to-dataurl'
 
 import BpmnModeler from 'bpmn-js/lib/Modeler'
+import * as PropertiesPanelModule from 'bpmn-js-properties-panel'
+import * as PropertiesProviderModule from 'bpmn-js-properties-panel/lib/provider/camunda'
+import CamundaModdleDescriptor from 'camunda-bpmn-moddle/resources/camunda'
 
 /* 
   FIXME
@@ -24,8 +28,10 @@ import BpmnModeler from 'bpmn-js/lib/Modeler'
 */
 // import DiagramJSStyle from '!!text-loader!bpmn-js/dist/assets/diagram-js.css'
 // import BPMNStyle from '!!text-loader!bpmn-js/dist/assets/bpmn-font/css/bpmn-codes.css'
+// import PropertyPanelStyle from '!!text-loader!bpmn-js-properties-panel/styles/properties.less'
 import DiagramJSStyle from '!!text-loader!../../assets/diagram-js.css'
 import BPMNStyle from '!!text-loader!../../assets/bpmn-font/css/bpmn-codes.css'
+import PropertyPanelStyle from '!!text-loader!../../assets/bpmn-js-properties-panel.css'
 
 import NEW_DIAGRAM from '../resource/new-diagram.bpmn'
 import './bpmn-font-loader'
@@ -35,9 +41,11 @@ const NOOP = () => {}
 class ProcessModellerPage extends connect(store)(PageView) {
   static get styles() {
     return [
+      ScrollbarStyles,
       css`
         ${unsafeCSS(DiagramJSStyle)}
         ${unsafeCSS(BPMNStyle)}
+        ${unsafeCSS(PropertyPanelStyle)}
         [class^='bpmn-icon-']:before,
         [class*=' bpmn-icon-']:before {
           font-family: 'bpmn';
@@ -77,12 +85,29 @@ class ProcessModellerPage extends connect(store)(PageView) {
       css`
         :host {
           display: flex;
+          flex-direction: row;
+
           position: relative;
           overflow: hidden;
         }
 
-        div {
+        #container {
           flex: 1;
+        }
+
+        #property-panel {
+          top: 0;
+          bottom: 0;
+          right: 0;
+          width: 260px;
+          z-index: 10;
+          border-left: 1px solid #ccc;
+          overflow: auto;
+        }
+
+        .djs-properties-panel {
+          padding-bottom: 70px;
+          min-height: 100%;
         }
 
         .buttons {
@@ -172,7 +197,8 @@ class ProcessModellerPage extends connect(store)(PageView) {
           ></oops-note>
         `
       : html`
-          <div></div>
+          <div id="container"></div>
+          <div id="property-panel"></div>
 
           <ul class="buttons">
             <li>
@@ -249,7 +275,14 @@ class ProcessModellerPage extends connect(store)(PageView) {
     }
 
     this.modeller = new BpmnModeler({
-      container: this.renderRoot.querySelector('div')
+      container: this.renderRoot.querySelector('#container'),
+      propertiesPanel: {
+        parent: this.renderRoot.querySelector('#property-panel')
+      },
+      additionalModules: [PropertiesPanelModule, PropertiesProviderModule],
+      moddleExtensions: {
+        camunda: CamundaModdleDescriptor
+      }
     })
 
     if (this.process) {
@@ -271,6 +304,9 @@ class ProcessModellerPage extends connect(store)(PageView) {
     // })
     // this.modeller.on('element.mousedown', function() {
     //   console.log('element.mousedown', arguments)
+    // })
+    // this.modeller.on('end', function() {
+    //   console.log('WOW')
     // })
   }
 
