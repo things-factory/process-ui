@@ -1,6 +1,6 @@
 {
   "name": "@things-factory/process-ui",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "main": "dist-server/index.js",
   "browser": "client/index.js",
   "things-factory": true,
@@ -32,13 +32,16 @@
   "dependencies": {
     "@things-factory/layout-base": "*",
     "@things-factory/shell": "*",
-    "bpmn-js": "things-factory/bpmn-js",
-    "bpmn-js-properties-panel": "things-factory/bpmn-js-properties-panel",
+    "bpmn-js": "^6.3.0",
+    "bpmn-js-properties-panel": "^0.33.1",
     "camunda-bpmn-moddle": "^4.4.0",
     "file-saver": "^2.0.2",
     "svg-to-dataurl": "^1.0.0"
   },
   "devDependencies": {
     "@things-factory/operato-bpms": "*"
+  },
+  "resolutions": {
+    "matches-selector": "^1.2.0"
   }
 }
